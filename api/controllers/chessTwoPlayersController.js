@@ -15,7 +15,7 @@ var status = new Status();
 
 exports.startNewGame = function(req, res) {
     var chess = new Chess();
-    var gameId = mongoose.Types.ObjectId();
+    var gameId = new mongoose.Types.ObjectId();
     var chessGame = new ChessGame();
     chessGame.chess = chess.fen();
     chessGame.game_id = gameId;
@@ -46,7 +46,7 @@ exports.startNewGameWithFEN = function(req, res) {
     if(validation.valid) {
 
         chess.load(fenString);
-        var gameId = mongoose.Types.ObjectId();
+        var gameId = new mongoose.Types.ObjectId();
         var chessGame = new ChessGame();
         chessGame.chess = chess.fen();
         chessGame.game_id = gameId;
@@ -82,7 +82,7 @@ exports.startNewGameWithPgn = function(req, res) {
     if(valid) {
 
         chess.load_pgn(pgnString);
-        var gameId = mongoose.Types.ObjectId();
+        var gameId = new mongoose.Types.ObjectId();
         var chessGame = new ChessGame();
         chessGame.chess = chess.fen();
         chessGame.game_id = gameId;

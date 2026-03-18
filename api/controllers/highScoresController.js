@@ -8,7 +8,7 @@ var Status = mongoose.model('Status');
 var status =  new Status();
 
 exports.createNewLocalScoreboard = function(req, res) {
-    var scoreBoardId = mongoose.Types.ObjectId();
+    var scoreBoardId = new mongoose.Types.ObjectId();
 
     status.status = "Scoreboard created!";
     status.scoreboard_id = scoreBoardId;
