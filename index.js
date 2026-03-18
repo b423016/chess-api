@@ -1,7 +1,6 @@
 'use strict';
 
 var express = require('express');
-var bodyParser = require('body-parser');
 var dataBase = require('./api/models/db');
 var routesApi = require('./api/routes/apiRoutes');
 var app = express();
@@ -26,8 +25,8 @@ app.get('/', function (req, res) {
   res.send('<!DOCTYPE html><html><body style="background-color:gray;"><h1 style="text-align:center;">Up and running.</h1></body></html>');
 });
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 routesApi(app);
 

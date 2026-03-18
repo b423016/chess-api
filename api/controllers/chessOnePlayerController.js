@@ -1,7 +1,6 @@
 'use strict';
 
 var mongoose = require('mongoose');
-var chessAi = require('chess-ai-kong');
 var Chess = require('chess.js').Chess;
 // var chess = null;
 
@@ -306,7 +305,14 @@ exports.moveAI = function(req, res) {
             var movesArr = currentGame.chess_moves;
 
             if(chess != null) {
-                var move = chessAi.play(movesArr);
+                var legalMoves = chess.moves();
+                if (!legalMoves || legalMoves.length === 0) {
+                    status.status = "error: no legal moves available!";
+                    return res.json(status);
+                }
+
+                // Keep endpoint behavior but avoid legacy AI dependency.
+                var move = legalMoves[Math.floor(Math.random() * legalMoves.length)];
                 var makeMove = chess.move(move);
 
                 if(makeMove != null) {

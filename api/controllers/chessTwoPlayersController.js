@@ -1,7 +1,6 @@
 'use strict';
 
 var mongoose = require('mongoose');
-var chessAi = require('chess-ai-kong');
 var Chess = require('chess.js').Chess;
 // var chess = null;
 

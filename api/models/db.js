@@ -3,15 +3,24 @@
 var mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
+require('dotenv').config();
+
 var failedConnections = 0;
 var autoReconnect = true;
 
-//var db_URI = 'mongodb://localhost/ElmChessDb'
-var db_URI = 'mongodb://chess_player:chess_player@ds163016.mlab.com:63016/chess-highscores';
+// Prefer cloud-provided variables (Railway), fallback to local development URI.
+var db_URI = process.env.MONGODB_URI || process.env.MONGO_URL || process.env.DATABASE_URL || 'mongodb://localhost/ElmChessDb';
 connect();
 
 function connect() {
-    mongoose.connect(db_URI, { useMongoClient: true });
+    mongoose.connect(db_URI).catch(function(err) {
+        console.log('Initial mongoose connection failed: ' + err);
+        if (failedConnections < 3) {
+            failedConnections++;
+            console.log('Retrying mongoose connection in 5s... attempt ' + failedConnections);
+            setTimeout(connect, 5000);
+        }
+    });
 }
 
 /** Mongoose is connected **/
