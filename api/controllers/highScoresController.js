@@ -7,6 +7,28 @@ var Status = mongoose.model('Status');
 
 var status =  new Status();
 
+
+function saveDoc(doc, callback) {
+    doc.save()
+        .then(function(savedDoc) {
+            callback(null, savedDoc);
+        })
+        .catch(function(err) {
+            callback(err);
+        });
+}
+
+
+function findDocs(model, query, projection, options, callback) {
+    model.find(query, projection, options)
+        .then(function(results) {
+            callback(null, results);
+        })
+        .catch(function(err) {
+            callback(err);
+        });
+}
+
 exports.createNewLocalScoreboard = function(req, res) {
     var scoreBoardId = new mongoose.Types.ObjectId();
 
@@ -21,7 +43,7 @@ exports.createNewLocalScoreboard = function(req, res) {
 exports.addNewPlayer = function(req, res) {
     var newPlayer = new Player(req.body);
 
-    newPlayer.save(function(err, player) {
+    saveDoc(newPlayer, function(err, player) {
         if(err) {
             res.send(err);
         }
@@ -34,7 +56,7 @@ exports.addNewPlayer = function(req, res) {
 exports.lisTopHighScores = function(req, res) {
     var scoreBoardId = req.body.scoreboard_id;
     console.log(scoreBoardId);;
-    Player.find(
+    findDocs(Player, 
                 { scoreboard_id: scoreBoardId },                            //filter by scoreboard ID
                 ['name', 'score', 'score_out', 'date', 'date_out'],         //Return name, score and date
                 {

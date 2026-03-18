@@ -13,6 +13,39 @@ var status = new Status();
 // var movesArr = [];
 
 
+function saveDoc(doc, callback) {
+    doc.save()
+        .then(function(savedDoc) {
+            callback(null, savedDoc);
+        })
+        .catch(function(err) {
+            callback(err);
+        });
+}
+
+
+function updateDoc(model, query, data, callback) {
+    model.updateOne(query, data)
+        .then(function(result) {
+            callback(null, result);
+        })
+        .catch(function(err) {
+            callback(err);
+        });
+}
+
+
+function findOneDoc(model, query, callback) {
+    model.findOne(query)
+        .then(function(result) {
+            callback(null, result);
+        })
+        .catch(function(err) {
+            callback(err);
+        });
+}
+
+
 exports.startNewGame = function(req, res) {
     var chess = new Chess();
     var gameId = new mongoose.Types.ObjectId();
@@ -20,7 +53,7 @@ exports.startNewGame = function(req, res) {
     chessGame.chess = chess.fen();
     chessGame.game_id = gameId;
 
-    chessGame.save(function(err, chess) {
+    saveDoc(chessGame, function(err, chess) {
         if(err) {
             res.send(err);
         }
@@ -51,7 +84,7 @@ exports.startNewGameWithFEN = function(req, res) {
         chessGame.chess = chess.fen();
         chessGame.game_id = gameId;
 
-        chessGame.save(function(err, chess) {
+        saveDoc(chessGame, function(err, chess) {
             if(err) {
                 res.send(err);
             }
@@ -87,7 +120,7 @@ exports.startNewGameWithPgn = function(req, res) {
         chessGame.chess = chess.fen();
         chessGame.game_id = gameId;
 
-        chessGame.save(function(err, chess) {
+        saveDoc(chessGame, function(err, chess) {
             if(err) {
                 res.send(err);
             }
@@ -180,7 +213,7 @@ exports.move = function(req, res) {
                 if(move != null) {
 
                     movesArr.push(move.san);
-                    ChessGame.update({ game_id: gameId },
+                    updateDoc(ChessGame, { game_id: gameId },
                         {
                          chess: chess.fen() ,
                                 chess_moves: movesArr
@@ -322,7 +355,7 @@ exports.moveAI = function(req, res) {
                     movesArr.push(makeMove.san);
 
 
-                    ChessGame.update({ game_id: gameId },
+                    updateDoc(ChessGame, { game_id: gameId },
                         {
                          chess: chess.fen() ,
                                 chess_moves: movesArr
@@ -436,7 +469,7 @@ exports.undoLastMove = function(req, res){
             if(succes != null) {
                 movesArr.pop();
 
-                ChessGame.update({ game_id: gameId },
+                updateDoc(ChessGame, { game_id: gameId },
                     {
                      chess: chess.fen(),
                      chess_moves: movesArr
@@ -477,7 +510,7 @@ exports.resetBoard = function(req, res){
             var chess = new Chess(currentGame.chess);
             chess.reset();
 
-            ChessGame.update({ game_id: gameId },
+            updateDoc(ChessGame, { game_id: gameId },
                 {
                  chess: chess.fen()
                 },
@@ -513,7 +546,7 @@ exports.clearBoard = function(req, res){
             var chess = new Chess(currentGame.chess);
             chess.clear();
 
-            ChessGame.update({ game_id: gameId },
+            updateDoc(ChessGame, { game_id: gameId },
                 {
                  chess: chess.fen()
                 },
@@ -551,7 +584,7 @@ exports.loadFenOverCurrent = function(req, res){
 
                 chess.load(fenString);
 
-                ChessGame.update({ game_id: gameId },
+                updateDoc(ChessGame, { game_id: gameId },
                     {
                      chess: chess.fen(),
                      chess_moves: []
@@ -596,7 +629,7 @@ exports.loadPgnOverCurrent = function(req, res){
 
             if(valid) {
 
-                ChessGame.update({ game_id: gameId },
+                updateDoc(ChessGame, { game_id: gameId },
                     {
                      chess: chess.fen(),
                      chess_moves: []
@@ -658,9 +691,10 @@ exports.returnTurn = function(req, res){
 
 
 function getChess(gameId, callback) {
-    ChessGame.findOne({ game_id: gameId }, function(err, chessGame) {
+    findOneDoc(ChessGame, { game_id: gameId }, function(err, chessGame) {
         if(err) {
-            return null;
+            callback(null);
+            return;
         }
         callback(chessGame);
     });
