@@ -9,16 +9,71 @@ var AIMoves = mongoose.model('AIMoves');
 var Moves = mongoose.model('Moves');
 var Status = mongoose.model('Status');
 var status = new Status();
+var localGames = new Map();
 
 // var movesArr = [];
+
+
+function gameKey(gameId) {
+    return String(gameId);
+}
+
+
+function toLocalGame(doc) {
+    if (!doc || !doc.game_id || !doc.chess) {
+        return null;
+    }
+
+    return {
+        game_id: gameKey(doc.game_id),
+        chess: doc.chess,
+        chess_moves: Array.isArray(doc.chess_moves) ? doc.chess_moves : [],
+    };
+}
+
+
+function cacheLocalGame(doc) {
+    var game = toLocalGame(doc);
+    if (!game) {
+        return null;
+    }
+
+    localGames.set(game.game_id, game);
+    return game;
+}
+
+
+function applyLocalUpdate(gameId, data) {
+    var key = gameKey(gameId);
+    var existing = localGames.get(key);
+    if (!existing) {
+        return false;
+    }
+
+    if (data && Object.prototype.hasOwnProperty.call(data, 'chess')) {
+        existing.chess = data.chess;
+    }
+    if (data && Object.prototype.hasOwnProperty.call(data, 'chess_moves')) {
+        existing.chess_moves = Array.isArray(data.chess_moves) ? data.chess_moves : [];
+    }
+
+    localGames.set(key, existing);
+    return true;
+}
 
 
 function saveDoc(doc, callback) {
     doc.save()
         .then(function(savedDoc) {
+            cacheLocalGame(savedDoc);
             callback(null, savedDoc);
         })
         .catch(function(err) {
+            var fallback = cacheLocalGame(doc);
+            if (fallback) {
+                callback(null, fallback);
+                return;
+            }
             callback(err);
         });
 }
@@ -27,20 +82,45 @@ function saveDoc(doc, callback) {
 function updateDoc(model, query, data, callback) {
     model.updateOne(query, data)
         .then(function(result) {
+            if (query && query.game_id) {
+                applyLocalUpdate(query.game_id, data);
+            }
             callback(null, result);
         })
         .catch(function(err) {
+            if (query && query.game_id && applyLocalUpdate(query.game_id, data)) {
+                callback(null, { acknowledged: true, modifiedCount: 1, memory: true });
+                return;
+            }
             callback(err);
         });
 }
 
 
 function findOneDoc(model, query, callback) {
+    if (query && query.game_id) {
+        var existing = localGames.get(gameKey(query.game_id));
+        if (existing) {
+            callback(null, existing);
+            return;
+        }
+    }
+
     model.findOne(query)
         .then(function(result) {
+            if (result) {
+                cacheLocalGame(result);
+            }
             callback(null, result);
         })
         .catch(function(err) {
+            if (query && query.game_id) {
+                var fallback = localGames.get(gameKey(query.game_id));
+                if (fallback) {
+                    callback(null, fallback);
+                    return;
+                }
+            }
             callback(err);
         });
 }
